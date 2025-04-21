@@ -1,13 +1,29 @@
+const { _attributes } = require('../db');
 const { Company, Company_info } = require('../models/models');
 
 class CompanyController {
-    async createCompany(req, res) {
+    async createCompany(req, res) {    
         try {
-            const { id, img } = req.body;
-            const newCompany = await Company.create({ id, img });
-            return res.status(201).json(newCompany);
+            const { img } = req.body;
+            
+        // Получаем все существующие ID компаний
+        const existingCompanies = await Company.findAll({
+            attributes: ['id'],
+        });
+
+        const existingIds = existingCompanies.map(company => company.id);
+        
+        // Находим ближайший свободный ID
+        let newId = 1; // Начинаем с 1
+        while (existingIds.includes(newId)) {
+            newId++;
+        }
+
+        // Создаем новую компанию с найденным ID
+        const newCompany = await Company.create({ id: newId, img });
+        return res.status(201).json(newCompany);
         } catch (error) {
-            return res.status(500).json({ message: "Ошибка при создании компании", error });
+            return res.status(500).json({ message: "Ошибка при создании компании", error});
         }
     }
 
@@ -54,7 +70,7 @@ class CompanyController {
         try {
             const companyInfo = await Company_info.findOne({ where: { companyId: id } });
             if (!companyInfo) {
-                return res.status(404).json({ message: "Компания не" });
+                return res.status(404).json({ message: "Компания не найдена" });
             }
             await Company_info.destroy({
                 where: { companyId: id }

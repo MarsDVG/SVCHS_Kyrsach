@@ -3,10 +3,25 @@ const { Company_info } = require('../models/models')
 class CompanyInfoController {
     async create(req, res) {
         try {
-            const { name, description, companyId } = req.body;
-            const companyInfo = await Company_info.create({ name, description, companyId });
-            return res.json(companyInfo);
-        } catch (e) {
+                const { name, description, companyId } = req.body;
+                
+            const existingCompanies = await Company_info.findAll({
+                attributes: ['id'],
+            });
+    
+            const existingIds = existingCompanies.map(company => company.id);
+            
+            
+            let newId = 1; 
+            while (existingIds.includes(newId)) {
+                newId++;
+            }
+    
+            
+            const newCompany = await Company_info.create({ id: newId, name, description, companyId });
+            return res.status(201).json(newCompany);
+            }
+        catch (e) {
             console.log(e);
             res.status(500).json({message: "Ошибка при создании"})
         }
