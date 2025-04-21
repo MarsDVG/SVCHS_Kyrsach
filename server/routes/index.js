@@ -1,0 +1,19 @@
+const Router = require('express')
+const router = new Router()
+const listRouter = require('./listRouter')
+const favoritesRouter = require('./favoritesRouter')
+const userRouter = require('./userRouter')
+const carRouter = require('./carRouter')
+const company_infoRouter = require('./company_infoRouter')
+const driversRouter = require('./driversRouter')
+const company_ratingsRouter = require('./company_ratingsRouter')
+
+router.use('/user', userRouter)
+router.use('/list', listRouter)
+router.use('/favorites', favoritesRouter)
+router.use('/car', carRouter)
+router.use('/company_info', company_infoRouter)
+router.use('/driver', driversRouter)
+router.use('/company_ratings', company_ratingsRouter)
+
+module.exports = router

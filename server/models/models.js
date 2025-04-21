@@ -8,13 +8,13 @@ const User = sequelize.define('user', {
     role: {type: DataTypes.STRING,  defaultValue: "USER",},
 })
 
-const Basket = sequelize.define('basket', {
+const List = sequelize.define('list', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, },
 })
 
-const Basket_company = sequelize.define('basket_company', {
+const List_company = sequelize.define('list_company', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, },
-    workers: {type: DataTypes.INTEGER, allowNull: false, },
+    workers: {type: DataTypes.BOOLEAN, allowNull: false, },
 })
 
 const Company = sequelize.define('company', {
@@ -50,8 +50,8 @@ const Driver = sequelize.define('driver', {
     number: {type: DataTypes.STRING, allowNull: false, },
 })
 
-User.hasOne(Basket)
-Basket.belongsTo(User)
+User.hasOne(List)
+List.belongsTo(User)
 
 User.hasMany(Company_rating)
 Company_rating.belongsTo(User)
@@ -59,11 +59,11 @@ Company_rating.belongsTo(User)
 User.hasMany(Favorites)
 Favorites.belongsTo(User)
 
-Basket.hasMany(Basket_company)
-Basket_company.belongsTo(Basket)
+List.hasMany(List_company)
+List_company.belongsTo(List)
 
-Company.hasMany(Basket_company)
-Basket_company.belongsTo(Company)
+Company.hasMany(List_company)
+List_company.belongsTo(Company)
 
 Company.hasOne(Company_info)
 Company_info.belongsTo(Company)
@@ -82,8 +82,8 @@ Driver.belongsTo(Company)
 
 module.exports = {
     User,
-    Basket,
-    Basket_company,
+    List,
+    List_company,
     Company,
     Company_info,
     Company_rating,
