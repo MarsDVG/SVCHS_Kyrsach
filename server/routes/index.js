@@ -7,6 +7,7 @@ const carRouter = require('./carRouter')
 const company_infoRouter = require('./company_infoRouter')
 const driversRouter = require('./driversRouter')
 const company_ratingsRouter = require('./company_ratingsRouter')
+const companyRouter = require('./companyRouter')
 
 router.use('/user', userRouter)
 router.use('/list', listRouter)
@@ -15,5 +16,6 @@ router.use('/car', carRouter)
 router.use('/company_info', company_infoRouter)
 router.use('/driver', driversRouter)
 router.use('/company_ratings', company_ratingsRouter)
+router.use('/company', companyRouter)
 
 module.exports = router

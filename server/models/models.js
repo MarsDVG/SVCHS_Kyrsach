@@ -26,6 +26,7 @@ const Company_info = sequelize.define('company_info', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, },
     description: {type: DataTypes.STRING, allowNull: false, },
     name: {type: DataTypes.STRING, allowNull: false, },
+    companyId: { type: DataTypes.INTEGER, allowNull: false }, // Внешний ключ
 })
 
 const Company_rating = sequelize.define('company_rating', {
@@ -65,8 +66,8 @@ List_company.belongsTo(List)
 Company.hasMany(List_company)
 List_company.belongsTo(Company)
 
-Company.hasOne(Company_info)
-Company_info.belongsTo(Company)
+// Company.hasOne(Company_info)
+// Company_info.belongsTo(Company)
 
 Company.hasMany(Company_rating)
 Company_rating.belongsTo(Company)
@@ -79,6 +80,9 @@ Car.belongsTo(Company)
 
 Company.hasMany(Driver)
 Driver.belongsTo(Company)
+
+Company.hasMany(Company_info, { foreignKey: 'companyId', onDelete: 'CASCADE' });
+Company_info.belongsTo(Company, { foreignKey: 'companyId' });
 
 module.exports = {
     User,

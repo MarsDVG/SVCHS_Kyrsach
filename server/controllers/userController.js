@@ -18,7 +18,7 @@ class UserController {
         }
         const candidate=await User.findOne({where:{email}})
         if(candidate){
-            return next(ApiError.badRequest('email was occupid'))
+            return next(ApiError.badRequest(`email ${email} was occupid`))
         }
         const hashPassword = await bcrypt.hash(password, 5)
         const user = await User.create({email, role, password: hashPassword})
@@ -43,6 +43,21 @@ class UserController {
     async check(req,res,next){
         const token = generateJwt(req.user.id, req.user.email, req.user.role)
         return res.json({token})
+    }
+    async report(req, res, next) {
+        try {
+            const users = await User.findAll({
+                attributes: ['id', 'email', 'role', 'createdAt'],   });
+            const formattedUsers = users.map(user => ({
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                createdAt: user.createdAt
+            }));
+            res.status(200).json(formattedUsers); } catch (error) {
+            console.error('Ошибка при получении данных о пользователях:', error);
+            return next(ApiError.internal('Ошибка при получении данных о пользователях'));
+        }
     }
 }
 

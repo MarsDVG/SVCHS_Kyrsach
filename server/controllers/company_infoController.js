@@ -3,8 +3,8 @@ const { Company_info } = require('../models/models')
 class CompanyInfoController {
     async create(req, res) {
         try {
-            const { name, description } = req.body;
-            const companyInfo = await Company_info.create({ name, description });
+            const { name, description, companyId } = req.body;
+            const companyInfo = await Company_info.create({ name, description, companyId });
             return res.json(companyInfo);
         } catch (e) {
             console.log(e);
