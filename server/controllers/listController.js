@@ -4,31 +4,32 @@ const ApiError = require('../error/ApiError')
 class ListController {
   async addToList(req, res, next) {
     try {
-        const { orderId, userId } = req.body;
+      const { companyId, userId, workers } = req.body;
 
-        const orders = await Company.findByPk(orderId);
+        const orders = await Company.findByPk(companyId);
         console.log()
-        if (!orders) {
+        if (!companyId) {
             return res.status(404).json({ message: "Заказ не найден", orders });
         }
 
-        let list = await List.findOne({ where: { userId } });
+        let list = await List.findOne({ where: { id:userId } });
         if (!list) {
-            list = await List.create({ userId });
+            list = await List.create({ id:userId });
         }
 
         const listStuff = await List_company.findOne({
-            where: { listId: list.id, orderId }
-        });
+          where: { listId: list.id, companyId }
+      });
         if (listStuff) {
             return res.status(400).json({ message: "Заказ уже активен" });
         }
 
       
         const newStuffinList = await List_company.create({
-            listId: list.id,
-            orderId
-        });
+          listId: list.id,
+          companyId,
+          workers 
+      });
 
         return res.json({ message: "Заказ добавлен в список", listStuff: newStuffinList });
     } catch (e) {
@@ -40,7 +41,7 @@ async getList(req, res) {
   try {
     const { userId } = req.params;
   
-    const list = await List.findOne({ where: { userId } });
+    const list = await List.findOne({ where: { id:userId } });
 
     if (!list) {
       return res.status(404).json({ message: 'Список не найден' });
@@ -85,9 +86,9 @@ async getListId(req, res) {
      
 async removeFromList(req, res) {
   try {
-    const { listId, orderId } = req.body; 
+    const { listId, companyId } = req.body; 
     const deleted = await List_company.destroy({
-      where: { listId, orderId } 
+      where: { listId, companyId } 
     });
 
     if (deleted) {
