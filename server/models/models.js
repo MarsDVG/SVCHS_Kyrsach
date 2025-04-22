@@ -43,6 +43,7 @@ const Car = sequelize.define('car', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, },
     load_capacity: {type: DataTypes.DOUBLE, allowNull: false, },
     rent_price: {type: DataTypes.DOUBLE, allowNull: false, },
+    brand: {type: DataTypes.STRING, allowNull: false, },
 })
 
 const Driver = sequelize.define('driver', {
