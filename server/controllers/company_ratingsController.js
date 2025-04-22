@@ -20,7 +20,7 @@ class RaitingController {
         const raitings = await Company_rating.findAll()
         return res.json(raitings)
     }
-    async getByGoodId(req, res, next) {
+    async getByCompanyId(req, res, next) {
         try {
             const { companyId } = req.params; 
             if (!companyId) {

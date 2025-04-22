@@ -6,6 +6,7 @@ const User = sequelize.define('user', {
     email: {type: DataTypes.STRING, unique:true, allowNull: false, },
     password: {type: DataTypes.STRING, allowNull: false,},
     role: {type: DataTypes.STRING,  defaultValue: "USER",},
+    block: {type: DataTypes.BOOLEAN, defaultValue: false},
 })
 
 const List = sequelize.define('list', {
@@ -31,7 +32,7 @@ const Company_info = sequelize.define('company_info', {
 
 const Company_rating = sequelize.define('company_rating', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, },
-    rate: {type: DataTypes.INTEGER, allowNull: false, },
+    rate: {type: DataTypes.DOUBLE, allowNull: false, },
 })
 
 const Favorites = sequelize.define('favorites', {

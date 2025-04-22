@@ -1,9 +1,10 @@
 const Router = require('express')
 const router = new Router()
 const company_ratingsController = require('../controllers/company_ratingsController')
+const checkRoleMiddleware = require('../middleware/checkRoleMiddleware')
 
-router.post('/', company_ratingsController.create)
-router.get('/', company_ratingsController.getAll)
-router.get('/:goodId', company_ratingsController.getByGoodId)
+router.post('/', checkRoleMiddleware('USER','ADMIN'), company_ratingsController.create)
+router.get('/', checkRoleMiddleware('USER','ADMIN'), company_ratingsController.getAll)
+router.get('/:companyId', checkRoleMiddleware('USER','ADMIN'), company_ratingsController.getByCompanyId)
 
 module.exports = router

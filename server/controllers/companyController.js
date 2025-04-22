@@ -6,20 +6,19 @@ class CompanyController {
         try {
             const { img } = req.body;
             
-        // Получаем все существующие ID компаний
         const existingCompanies = await Company.findAll({
             attributes: ['id'],
         });
 
         const existingIds = existingCompanies.map(company => company.id);
         
-        // Находим ближайший свободный ID
-        let newId = 1; // Начинаем с 1
+
+        let newId = 1; 
         while (existingIds.includes(newId)) {
             newId++;
         }
 
-        // Создаем новую компанию с найденным ID
+
         const newCompany = await Company.create({ id: newId, img });
         return res.status(201).json(newCompany);
         } catch (error) {
@@ -86,7 +85,7 @@ class CompanyController {
 
             
 
-            return res.status(204).json(); // Успешное удаление
+            return res.status(204).json({ message: "Компания успешно удалена" }); 
         } catch (error) {
             console.log(error);
             return res.status(500).json({ message: "Ошибка при удалении компании" });
