@@ -40,10 +40,9 @@ class CompanyInfoController {
     async getOne(req, res) {
         try {
             const {id} = req.params;
-            const companyInfo = await Company_info.findOne({where:{id}});
+            const companyInfo = await Company_info.findOne({where:{companyId: Number(id)}});
             return res.json(companyInfo);
         } catch (e) {
-            console.log(e);
             res.status(500).json({message: "Ошибка при получении"})
         }
     }
@@ -55,7 +54,6 @@ class CompanyInfoController {
             await Company_info.update({name, description}, {where:{id}})
             return res.json({message: "Успешно обновлено"})
         } catch (e) {
-            console.log(e);
             res.status(500).json({message: "Ошибка при обновлении"})
         }
     }

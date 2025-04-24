@@ -42,7 +42,7 @@ class CarController {
         return res.status(404).json({ error: 'Автомобиль не найден.' });
       }
       await car.destroy();
-      res.status(204).send();
+      res.json({car});
     } catch (error) {
       console.error("Error deleting car:", error);
       res.status(500).json({ error: 'Произошла ошибка при удалении автомобиля. Пожалуйста, попробуйте позже.' });

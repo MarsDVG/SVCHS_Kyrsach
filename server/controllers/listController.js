@@ -28,7 +28,7 @@ class ListController {
         const newStuffinList = await List_company.create({
           listId: list.id,
           companyId,
-          workers 
+          workers
       });
 
         return res.json({ message: "Заказ добавлен в список", listStuff: newStuffinList });
@@ -51,11 +51,11 @@ async getList(req, res) {
       where: { listId: list.id },  
     });
 
-    const orderIds = listStuff.map(item => item.orderId);
+    const orderIds = listStuff.map(item => item.id);
 
     
 
-    return res.json(orderIds);
+    return res.json(listStuff);
   } catch (error) {
     console.error('Ошибка получения списка:', error);
     return res.status(500).json({ message: 'Ошибка получения списка' });
@@ -85,10 +85,11 @@ async getListId(req, res) {
     
      
 async removeFromList(req, res) {
+  
   try {
     const { listId, companyId } = req.body; 
     const deleted = await List_company.destroy({
-      where: { listId, companyId } 
+      where: { id:listId, companyId } 
     });
 
     if (deleted) {

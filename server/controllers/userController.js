@@ -21,10 +21,15 @@ class UserController {
             return next(ApiError.badRequest(`email ${email} уже занят`))
         }
         const hashPassword = await bcrypt.hash(password, 5)
-        const user = await User.create({email, role, password: hashPassword})
-        await List.create({UserId: user.id})
-        const token = generateJwt(user.id, user.email, user.role)
-        return res.json({token})
+        User.create({ email, role, password: hashPassword })
+        .then(async (user) => {
+            await List.create({ UserId: user.id });
+            const token = generateJwt(user.id, user.email, user.role);
+            const list = await List.findOne({ where: { UserId: user.id } });
+            const listId = list.id; //  Получаем id списка
+            return res.json({ token, user: { id: user.id, listId } });
+        })
+        .catch(next);
 
     }
     async login(req, res, next) {
@@ -54,12 +59,13 @@ class UserController {
     async report(req, res, next) {
         try {
             const users = await User.findAll({
-                attributes: ['id', 'email', 'role', 'createdAt'],   });
+                attributes: ['id', 'email', 'role', 'createdAt', 'block'],   });
             const formattedUsers = users.map(user => ({
                 id: user.id,
                 email: user.email,
                 role: user.role,
-                createdAt: user.createdAt
+                createdAt: user.createdAt,
+                block: user.block
             }));
             res.status(200).json(formattedUsers); } catch (error) {
             console.error('Ошибка при получении данных о пользователях:', error);

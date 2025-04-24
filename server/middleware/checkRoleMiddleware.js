@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-module.exports = function(role) {
+module.exports = function(...roles) {
     return function (req,res, next){
  if(req.method === "OPTIONS"){
     next()
@@ -11,7 +11,7 @@ try{
       return  res.status(401).json({message:"Not authoriz"})
     }
     const decoded = jwt.verify(token, process.env.SECRET_KEY)
-    if(decoded.role !==role){
+    if(!roles.includes(decoded.role)){
         return  res.status(403).json({message:"Not accepted"})
     }
     req.user = decoded
