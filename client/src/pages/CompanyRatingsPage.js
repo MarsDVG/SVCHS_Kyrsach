@@ -5,6 +5,7 @@ import { useState } from 'react'
 import companyStore from '../stores/CompanyStore'
 import authStore from '../stores/AuthStore'
 import { fetchCompanyRatingsByCompanyId, createCompanyRating } from '../api/companyRatingsApi'
+import { fetchCompanyInfoById } from '../api/company_infoApi'
 import { useTheme } from '@mui/material/styles'
 import InfoIcon from '@mui/icons-material/Info'
 import CompanyInfoDialog from '../components/CompanyInfoDialog'
@@ -21,6 +22,7 @@ const CompanyRatingsPage = observer(() => {
   const [infoDialogOpen, setInfoDialogOpen] = useState(false)
   const [infoCompanyId, setInfoCompanyId] = useState(null)
   const [csvLoading, setCsvLoading] = useState(false)
+  const [companyNames, setCompanyNames] = useState({});
 
   useEffect(() => {
     companyStore.loadCompanies()
@@ -57,10 +59,21 @@ const CompanyRatingsPage = observer(() => {
       setLoadingRatings(false)
     }
   }
+  const loadNames = async (companyId) => {
+    try {
+      const data = await fetchCompanyInfoById(companyId)
+      setCompanyNames((prev) => ({...prev, [companyId]: data.name})); // Обновляем состояние
+      return data.name;
+    } catch (e) {
+      setCompanyNames((prev) => ({...prev, [companyId]: 'Unknown'})); // Обновляем состояние
+      return 'Unknown';
+    }
+  };
   useEffect(() => {
     if (companyStore.companies.length > 0) {
       companyStore.companies.forEach((company) => {
         loadRatings(company.id)
+        loadNames(company.id)
       })
     }
     // eslint-disable-next-line
@@ -141,7 +154,7 @@ const CompanyRatingsPage = observer(() => {
             <Grid item xs={12} sm={6} key={company.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <CardContent>
-                  <Typography variant="h6" sx={{ mb: 1 }}>{`Компания #${company.id}`}</Typography>
+                  <Typography variant="h6" sx={{ mb: 1 }}>{companyNames[company.id]} </Typography>
                   <Box sx={{ mb: 1 }}>
                     <Rating
                       value={form[company.id]?.rate || 0}
