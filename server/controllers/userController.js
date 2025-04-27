@@ -23,9 +23,9 @@ class UserController {
         const hashPassword = await bcrypt.hash(password, 5)
         User.create({ email, role, password: hashPassword })
         .then(async (user) => {
-            await List.create({ UserId: user.id });
+            await List.create({ userId: user.id });
             const token = generateJwt(user.id, user.email, user.role);
-            const list = await List.findOne({ where: { UserId: user.id } });
+            const list = await List.findOne({ where: { userId: user.id } });
             const listId = list.id; //  Получаем id списка
             return res.json({ token, user: { id: user.id, listId } });
         })
@@ -37,7 +37,7 @@ class UserController {
         const user = await User.findOne({ where: { email } });
     
         if (!user) {
-            return next(ApiError.internal('Пользователь не существует')); // Более информативное сообщение
+            return next(ApiError.internal('Пользователь не существует')); 
         }
     
         if (user.block) { // Проверка на блокировку
@@ -46,7 +46,7 @@ class UserController {
     
         let comparePassword = bcrypt.compareSync(password, user.password);
         if (!comparePassword) {
-            return next(ApiError.internal('Неверный пароль')); // Более информативное сообщение
+            return next(ApiError.internal('Неверный пароль')); 
         }
     
         const token = generateJwt(user.id, user.email, user.role);

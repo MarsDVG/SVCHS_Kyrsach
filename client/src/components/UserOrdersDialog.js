@@ -18,17 +18,9 @@ import {
 } from "@mui/material"
 import { saveAs } from "file-saver"
 import { fetchUserOrders } from "../api/listApi"
+import jsPDF from 'jspdf'; 
+import autoTable from 'jspdf-autotable'; 
 
-function arrayToCsv(data) {
-  if (!data.length) return ""
-  const header = Object.keys(data[0]).join(",")
-  const rows = data.map(row =>
-    Object.values(row)
-      .map(v => `"${String(v).replace(/"/g, '""')}"`)
-      .join(",")
-  )
-  return [header, ...rows].join("\r\n")
-}
 
 export default function UserOrdersDialog({ open, onClose, userId, userName }) {
   const theme = useTheme()
@@ -50,12 +42,37 @@ export default function UserOrdersDialog({ open, onClose, userId, userName }) {
   }, [open, userId])
 
   const handleExport = () => {
-    if (!orders.length) return
-    const csv = arrayToCsv(orders)
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
-    saveAs(blob, `orders_${userName || userId}.csv`)
-  }
+    if (!orders || !orders.length) {
+        alert('Нет заказов для экспорта.');
+        return;
+    }
 
+    try {
+        const doc = new jsPDF();
+        const header = Object.keys(orders[0]); 
+        if (!header || header.length === 0) {
+          alert('Невозможно обработать данные заказов. Проверьте формат данных.');
+          return;
+        }
+
+        const body = orders.map(order => Object.values(order)); 
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        autoTable(doc, {
+            head: [header],
+            body: body,
+            startY: 20,
+            theme: 'grid',
+        });
+
+        const blob = doc.output('blob');
+        saveAs(blob, `orders_${userName || userId}.pdf`);
+    } catch (error) {
+        console.error('Ошибка при генерации отчета:', error);
+        alert('Произошла ошибка при генерации отчета. Пожалуйста, попробуйте позже.');
+    }
+};
   return (
     <Dialog open={open} onClose={onClose} fullScreen={fullScreen} maxWidth="md" fullWidth>
       <DialogTitle>Заказы пользователя {userName || userId}</DialogTitle>
@@ -76,7 +93,9 @@ export default function UserOrdersDialog({ open, onClose, userId, userName }) {
                 {orders.map((order, idx) => (
                   <TableRow key={order.id || idx}>
                     {Object.values(order).map((val, i) => (
-                      <TableCell key={i}>{val}</TableCell>
+                      <TableCell key={i}>
+                      {typeof val === 'boolean' ? (val ? 'Да' : 'Нет') : val}
+                    </TableCell>
                     ))}
                   </TableRow>
                 ))}

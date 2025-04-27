@@ -1,16 +1,20 @@
-import React, { useEffect, useState } from "react"
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, CircularProgress, Box, IconButton } from "@mui/material"
 import EditIcon from "@mui/icons-material/Edit"
 import SaveIcon from "@mui/icons-material/Save"
 import CloseIcon from "@mui/icons-material/Close"
 import { fetchCompanyInfoById, updateCompanyInfo, createCompanyInfo } from "../api/company_infoApi"
+import authStore from '../stores/AuthStore';
 
-export default function CompanyInfoDialog({ companyId, open, onClose, canEdit=true}) {
-  const [editMode, setEditMode] = useState(false)
-  const [editData, setEditData] = useState({ name: "", description: "" })
-  const [saving, setSaving] = useState(false)
+
+
+export default function CompanyInfoDialog({ companyId, open, onClose, canEdit = true }) {
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState({ name: "", description: "" });
+  const [saving, setSaving] = useState(false);
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
     if (open) {
@@ -18,33 +22,76 @@ export default function CompanyInfoDialog({ companyId, open, onClose, canEdit=tr
       fetchCompanyInfoById(companyId)
         .then(info => {
           setInfo(info);
+          setEditData({ name: info?.name || "", description: info?.description || "" }); 
           setEditMode(false);
         })
         .catch(error => {
-          console.error("Error fetching company info:", error);
+          console.error("Ошибка при загрузке информации о компании:", error);
         })
         .finally(() => {
           setLoading(false);
         });
     }
-  }, [open, companyId]);
+  }, [open, companyId, refresh]);
 
-  const handleEdit = () => setEditMode(true)
+  const handleEdit = () => setEditMode(true);
   const handleCancelEdit = () => {
-    setEditMode(false)
-    setEditData({ name: info?.name || "", description: info?.description || "" })
-  }
-  const handleChange = e => setEditData({ ...editData, [e.target.name]: e.target.value })
+    setEditMode(false);
+    setEditData({ name: info?.name || "", description: info?.description || "" });
+  };
+  const handleChange = e => setEditData({ ...editData, [e.target.name]: e.target.value });
   const handleSave = async () => {
-    setSaving(true)
-    if (info === null) {
-      await createCompanyInfo({ companyId, ...editData });
-    } else {
-      await updateCompanyInfo(companyId, editData)
+    setSaving(true);
+    try {
+      if (info === null) {
+        await createCompanyInfo({ companyId, ...editData });
+      } else {
+        await updateCompanyInfo(companyId, editData);
+      }
+      setRefresh(refresh + 1); 
+    } catch (error) {
+      console.error("Ошибка при сохранении:", error);
+    } finally {
+      setEditMode(false);
+      setSaving(false);
     }
-    setEditMode(false)
-    setSaving(false)
-  }
+  };
+  const isAdmin = authStore.token && authStore.getUserData()?.role === 'ADMIN';
+
+  if (!isAdmin) 
+  return (<Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <DialogTitle>
+      Информация о компании
+      <IconButton onClick={onClose} sx={{ position: "absolute", right: 8, top: 8 }}>
+        <CloseIcon />
+      </IconButton>
+    </DialogTitle>
+    <DialogContent>
+      {loading && (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight={120}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {!loading && (
+        <Box>
+          {editMode ? (
+            <>
+              <TextField label="Название" name="name" value={editData.name} onChange={handleChange} fullWidth margin="normal" />
+              <TextField label="Описание" name="description" value={editData.description} onChange={handleChange} fullWidth margin="normal" multiline minRows={3} />
+            </>
+          ) : (
+            <>
+              <Typography variant="subtitle1" gutterBottom>Название: {info?.name || "Не определено"}</Typography>
+              <Typography variant="body2" gutterBottom>Описание: {info?.description || "Не определено"}</Typography>
+            </>
+          )}
+        </Box>
+      )}
+    </DialogContent>
+  </Dialog>
+  );
+  else
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
@@ -87,5 +134,5 @@ export default function CompanyInfoDialog({ companyId, open, onClose, canEdit=tr
         )}
       </DialogActions>
     </Dialog>
-  )
+  );
 }

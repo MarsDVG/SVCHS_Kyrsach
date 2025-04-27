@@ -1,4 +1,6 @@
 import React from "react"
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   Box,
   Button,
@@ -31,6 +33,7 @@ import {
 } from "../api/userApi"
 
 import UserOrdersDialog from "../components/UserOrdersDialog"
+
 
 function UserManagementPage() {
   const theme = useTheme()
@@ -88,27 +91,41 @@ const [ordersDialogUser, setOrdersDialogUser] = React.useState(null)
   }
 
   async function handleReport() {
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await fetchUsers()
-      const bannedUsers = data.filter(user => user.block)
-      if (bannedUsers.length === 0) {
-        setSnackbar({ open: true, message: "Нет заблокированных пользователей", severity: "info" })
-        return
-      }
-      const header = ["id", "email", "role", "createdAt"]
-      const rows = bannedUsers.map(u => [u.id, u.email, u.role, u.createdAt])
-      let csv = header.join(",") + "\n" + rows.map(r => r.join(",")).join("\n")
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-      saveAs(blob, `banned_users_${new Date().toISOString().slice(0,10)}.csv`)
-      setSnackbar({ open: true, message: "CSV отчёт создан", severity: "success" })
-    } catch {
-      setSnackbar({ open: true, message: "Ошибка создания отчёта", severity: "error" })
-    } finally {
-      setLoading(false)
-    }
-  }
+        const data = await fetchUsers();
+        const bannedUsers = data.filter(user => user.block);
 
+        if (bannedUsers.length === 0) {
+            setSnackbar({ open: true, message: "Нет заблокированных пользователей", severity: "info" });
+            return;
+        }
+
+        const doc = new jsPDF();
+        const header = ["id", "email", "role", "createdAt"];
+        const body = bannedUsers.map(user => [user.id, user.email, user.role, user.createdAt]);
+
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        autoTable(doc, { 
+            head: [header],
+            body: body,
+            startY: 20
+        });
+
+        
+        const blob = doc.output('blob');
+        saveAs(blob, `banned_users_${new Date().toISOString().slice(0, 10)}.pdf`);
+
+        setSnackbar({ open: true, message: "PDF отчёт создан", severity: "success" });
+    } catch (error) {
+        console.error("Ошибка при генерации PDF:", error);
+        setSnackbar({ open: true, message: "Ошибка создания отчёта: " + error.message, severity: "error" });
+    } finally {
+        setLoading(false);
+    }
+}
   const filteredUsers = users.filter(
     u =>
       String(u.email).toLowerCase().includes(search.toLowerCase()) ||

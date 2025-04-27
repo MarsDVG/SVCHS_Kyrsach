@@ -17,7 +17,7 @@ const RegistrationPage = () => {
     try {
       await registrationApi({ email, password });
       navigate('/login');
-    } catch (err) {
+   } catch (err) {
       setError(err.message || 'Registration failed');
     } finally {
       setIsLoading(false);

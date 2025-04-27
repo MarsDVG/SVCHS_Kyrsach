@@ -18,23 +18,28 @@ function UserOrdersPage() {
     const userId = userData && (userData.id || userData.userId || userData.email || userData._id);
     if (!userId) return;
     setLoading(true);
-    fetchUserOrders(userId)
-      .then((res) => setOrders(res || []))
+    Promise.all([
+      fetchUserOrders(userId),
+      fetchUserFavorites(userId),
+      fetchAllCompanyInfo()
+    ])
+      .then(([ordersData, favoritesData, companiesData]) => {
+        setOrders(ordersData || []);
+        setFavorites(favoritesData || []);
+        setCompanies(Array.isArray(companiesData) ? companiesData : []);
+      })
       .finally(() => setLoading(false));
-    fetchUserFavorites(userId).then((res) => setFavorites(res || []));
-    fetchAllCompanyInfo().then((data) => setCompanies(Array.isArray(data) ? data : []));
   }, []);
 
   const handleDeleteOrder = (listId, companyId) => {
     removeFromList(listId, companyId)
       .then(() => {
         setOrders((prevOrders) => prevOrders.filter((order) => order.id !== companyId));
-        window.location.reload();
+        window.location.reload(); 
       })
       .catch((error) => {
         console.error('Ошибка удаления заказа:', error);
       });
-      
   };
 
   const handleDeleteFavorite = (companyId) => {
@@ -48,8 +53,7 @@ function UserOrdersPage() {
       .catch((error) => {
         console.error('Ошибка удаления избранной компании:', error);
       });
-  }
-  
+  };
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 3, md: 6 } }}>
@@ -97,13 +101,13 @@ function UserOrdersPage() {
                         <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleString() : '—'}</TableCell>
                         <TableCell>{order.workers ? <CheckIcon /> : '—'}</TableCell>
                         <TableCell>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleDeleteOrder(order.id, order.companyId)}
-                            >
-                                Delete
-                            </Button>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => handleDeleteOrder(order.id, order.companyId)}
+                          >
+                            Отменить заказ
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -114,26 +118,26 @@ function UserOrdersPage() {
           </Box>
         )}
         {tab === 1 && (
-          <Box>
+          <Box sx={{ display: 'flex', alignItems: 'stretch', height: '100%' }}>
             {favorites.length === 0 ? (
               <Typography align="center" color="text.secondary" sx={{ mt: 4 }}>
                 Нет избранных компаний
               </Typography>
             ) : (
-              <Grid container spacing={2} sx={{ mt: 2 }}>
+              <Grid container spacing={2} sx={{ mt: 2, height: '100%' }}>
                 {favorites.map((fav) => {
                   const company = companies.find((c) => c.id === fav.companyId);
                   return (
-                    <Grid item xs={12} sm={6} md={4} key={fav.id}>
-                      <Paper elevation={2} sx={{ p: 2, borderRadius: 3, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(120deg, #fdf6e3 0%, #e0e7ff 100%)' }}>
+                    <Grid item xs={12} sm={6} md={4} key={fav.id} sx={{ height: '100%' }}>
+                      <Paper elevation={2} sx={{ p: 2, borderRadius: 3, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch', background: 'linear-gradient(120deg, #fdf6e3 0%, #e0e7ff 100%)' }}>
                         <Typography variant="h6">{company?.name || 'Компания'}</Typography>
-                        <Typography variant="body2" color="text.secondary">{company?.description || ''}</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1, whiteSpace: 'pre-wrap' }}>{company?.description || ''}</Typography>
                         <Button
                           variant="contained"
                           color="primary"
                           onClick={() => handleDeleteFavorite(fav.companyId)}
                         >
-                          Delete
+                          Удалить из избранного
                         </Button>
                       </Paper>
                     </Grid>

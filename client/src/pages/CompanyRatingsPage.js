@@ -6,12 +6,11 @@ import companyStore from '../stores/CompanyStore'
 import authStore from '../stores/AuthStore'
 import { fetchCompanyRatingsByCompanyId, createCompanyRating } from '../api/companyRatingsApi'
 import { useTheme } from '@mui/material/styles'
-import { fetchCompanyInfoById } from '../api/company_infoApi'
 import InfoIcon from '@mui/icons-material/Info'
 import CompanyInfoDialog from '../components/CompanyInfoDialog'
-import { fetchCompanies } from '../api/companyApi'
-import { fetchCompanyRatings } from '../api/companyRatingsApi'
-import { saveAs } from "file-saver"
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+
 
 const CompanyRatingsPage = observer(() => {
   const theme = useTheme()
@@ -26,7 +25,6 @@ const CompanyRatingsPage = observer(() => {
   useEffect(() => {
     companyStore.loadCompanies()
   }, [])
-
   const handleOpenSnackbar = (message) => {
     setSnackbar({ open: true, message })
   }
@@ -36,9 +34,7 @@ const CompanyRatingsPage = observer(() => {
   const handleRatingChange = (companyId, value) => {
     setForm((prev) => ({ ...prev, [companyId]: { ...prev[companyId], rate: value } }))
   }
-  const handleCommentChange = (companyId, value) => {
-    setForm((prev) => ({ ...prev, [companyId]: { ...prev[companyId], comment: value } }))
-  }
+
   const handleSubmit = async (companyId) => {
     try {
       const userData = authStore.getUserData()
@@ -77,41 +73,62 @@ const CompanyRatingsPage = observer(() => {
     setInfoDialogOpen(false)
     setInfoCompanyId(null)
   }
-
-  const handleCsvExport = async () => {
-    setCsvLoading(true)
+  const handlePdfExport = async () => {
     try {
-      const companies = companyStore.companies
-      const ratingsData = await fetchCompanyRatings()
-      const header = ["company", "rate", "comment"]
-      const rows = []
-      companies.forEach(company => {
-        const companyRatings = ratingsData.filter(r => r.companyId === company.id)
-        if (companyRatings.length === 0) {
-          rows.push([company.name, '', ''])
-        } else {
-          companyRatings.forEach(rating => {
-            rows.push([company.name, rating.rate, rating.comment])
-          })
-        }
-      })
-      let csv = header.join(",") + "\n" + rows.map(r => r.map(val => typeof val === 'string' && val.includes(',') ? `"${val}"` : val).join(",")).join("\n")
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-      saveAs(blob, `company_ratings_report_${new Date().toISOString().slice(0,10)}.csv`)
-      setSnackbar({ open: true, message: 'CSV отчёт сформирован' })
-    } catch (e) {
-      setSnackbar({ open: true, message: 'Ошибка при формировании отчёта' })
-    } finally {
-      setCsvLoading(false)
-    }
-  }
+      const companyInfo = await fetch(`http://localhost:5000/api/company_info`).then(response => response.json());
 
+      if (!companyInfo || companyInfo.length === 0) {
+        const doc = new jsPDF();
+        doc.text('Нет данных для отображения', 10, 10);
+        const blob = doc.output('blob');
+        return;
+      }
+
+      const ratingPromises = companyInfo.map(company =>
+        fetchCompanyRatingsByCompanyId(company.companyId).then(ratingCompany => ({
+          companyName: company.name,
+          ratingCompany,
+        }))
+      );
+
+      const ratingData = await Promise.all(ratingPromises);
+
+      const tableData = ratingData.map(({ companyName, ratingCompany }) => {
+        const sum = ratingCompany.reduce((acc, rating) => acc + rating.rate, 0);
+        const avg = ratingCompany.length > 0 ? sum / ratingCompany.length : 0; // Обработка случая пустого массива
+        return [companyName, avg];
+      });
+
+      const doc = new jsPDF();
+      const header = ['Company', 'Average rate'];
+
+      autoTable(doc, {
+        head: [header],
+        body: tableData,
+        startY: 20,
+      });
+
+      const blob = doc.output('blob');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `company_ratings_report_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setSnackbar({ open: true, message: 'PDF отчёт сформирован' });
+
+    } catch (e) {
+      setSnackbar({ open: true, message: 'Ошибка при формировании отчёта' });
+      console.error("Error generating PDF:", e);
+    } finally {
+      setCsvLoading(false);
+    }
+  };
   return (
     <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
-      <Typography variant="h4" sx={{ mb: 3, textAlign: 'center', fontWeight: 700 }}>Рейтинги и отзывы компаний</Typography>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <Button variant="outlined" onClick={handleCsvExport} disabled={csvLoading}>
-          {csvLoading ? <CircularProgress size={20} /> : 'Создать CSV отчёт'}
+        <Button variant="outlined" onClick={handlePdfExport} disabled={csvLoading}>
+          {csvLoading ? <CircularProgress size={20} /> : 'Создать PDF отчёт'}
         </Button>
       </Box>
       {companyStore.loading ? (
@@ -124,7 +141,7 @@ const CompanyRatingsPage = observer(() => {
             <Grid item xs={12} sm={6} key={company.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <CardContent>
-                  <Typography variant="h6" sx={{ mb: 1 }}>{company.name || `Компания #${company.id}`}</Typography>
+                  <Typography variant="h6" sx={{ mb: 1 }}>{`Компания #${company.id}`}</Typography>
                   <Box sx={{ mb: 1 }}>
                     <Rating
                       value={form[company.id]?.rate || 0}
@@ -133,19 +150,19 @@ const CompanyRatingsPage = observer(() => {
                     />
                   </Box>
                   <Button
-                      variant="contained"
-                      onClick={() => handleSubmit(company.id)}
-                      disabled={!form[company.id]?.rate}
-                    >
-                      Оставить отзыв
-                    </Button>
+                    variant="contained"
+                    onClick={() => handleSubmit(company.id)}
+                    disabled={!form[company.id]?.rate}
+                  >
+                    Оставить оценку
+                  </Button>
                   <CardActions>
                     <Button size="small" onClick={() => handleOpenInfo(company.id)} startIcon={<InfoIcon />}>
                       Инфо
                     </Button>
                   </CardActions>
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Отзывы:</Typography>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Оценки:</Typography>
                     {loadingRatings ? (
                       <CircularProgress size={24} />
                     ) : (

@@ -2,27 +2,27 @@ const { _attributes } = require('../db');
 const { Company, Company_info } = require('../models/models');
 
 class CompanyController {
-    async createCompany(req, res) {    
+    async createCompany(req, res) {
         try {
             const { img } = req.body;
-            
-        const existingCompanies = await Company.findAll({
-            attributes: ['id'],
-        });
 
-        const existingIds = existingCompanies.map(company => company.id);
-        
+            const existingCompanies = await Company.findAll({
+                attributes: ['id'],
+            });
 
-        let newId = 1; 
-        while (existingIds.includes(newId)) {
-            newId++;
-        }
+            const existingIds = existingCompanies.map(company => company.id);
 
 
-        const newCompany = await Company.create({ id: newId, img });
-        return res.status(201).json(newCompany);
+            let newId = 1;
+            while (existingIds.includes(newId)) {
+                newId++;
+            }
+
+
+            const newCompany = await Company.create({ id: newId, img });
+            return res.status(201).json(newCompany);
         } catch (error) {
-            return res.status(500).json({ message: "Ошибка при создании компании", error});
+            return res.status(500).json({ message: "Ошибка при создании компании", error });
         }
     }
 
@@ -83,9 +83,7 @@ class CompanyController {
                 where: { id: id }
             });
 
-            
-
-            return res.status(204).json({ message: "Компания успешно удалена" }); 
+            return res.json(company);
         } catch (error) {
             console.log(error);
             return res.status(500).json({ message: "Ошибка при удалении компании" });
