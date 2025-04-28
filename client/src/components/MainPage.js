@@ -1,5 +1,9 @@
 import React from 'react';
 import { Box, Container, Grid, Card, CardContent, Typography, Button, Fade, useTheme } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import authStore from '../stores/AuthStore';
+import { observer } from 'mobx-react-lite';
+
 
 function AnimatedTruck() {
   const theme = useTheme();
@@ -30,8 +34,20 @@ function AnimatedTruck() {
   );
 }
 
-function MainPage() {
+const MainPage = observer(() => {
   const theme = useTheme();
+  const navigate = useNavigate();
+  const userData = authStore.getUserData();
+  const isLoggedIn = !!userData?.token;
+
+  const handleNavigation = (path) => {
+    if (!isLoggedIn) {
+      navigate('/login', { replace: true, state: { from: path } });
+    } else {
+      navigate(path);
+    }
+  };
+
   return (
     <>
       <Box
@@ -82,8 +98,7 @@ function MainPage() {
           <Button
             variant="contained"
             size="large"
-            
-            onClick={() => window.location.href = '/companies'}
+            onClick={() => handleNavigation('/companies')}
             sx={{ px: 5, py: 1.5, fontSize: { xs: '1rem', md: '1.2rem' }, fontWeight: 700, zIndex: 2, boxShadow: 4 }}
           >
             Начать
@@ -92,41 +107,41 @@ function MainPage() {
         <AnimatedTruck />
       </Box>
       <Container sx={{ py: 8 }}>
-        <Grid container spacing={4}>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => window.location.href = '/companies'}>
+        <Grid container spacing={4} justifyContent="center">
+          <Grid item xs={12} sm={6} md={4}>
+            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => handleNavigation('/companies')}>
               <CardContent>
                 <Typography variant="h5">Заказ услуг</Typography>
                 <Typography>Закажите перевозку и дополнительные услуги.</Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => window.location.href = '/user-orders'}>
+          <Grid item xs={12} sm={6} md={4}>
+            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => handleNavigation('/user-orders')}>
               <CardContent>
                 <Typography variant="h5">Активные заказы и избранные компании</Typography>
                 <Typography>Просмотр ваших активных заказов и избранных компаний.</Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => window.location.href = '/company-ratings'}>
+          <Grid item xs={12} sm={6} md={4}>
+            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => handleNavigation('/company-ratings')}>
               <CardContent>
                 <Typography variant="h5">Рейтинги и отзывы</Typography>
                 <Typography>Оставляйте оценки компаниям.</Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => window.location.href = '/profile'}>
+          <Grid item xs={12} sm={6} md={4}>
+            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => handleNavigation('/profile')}>
               <CardContent>
                 <Typography variant="h5">Профиль</Typography>
                 <Typography>Ваш профиль.</Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => window.location.href = '/promotions'}>
+          <Grid item xs={12} sm={6} md={4}>
+            <Card sx={{ height: '100%', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 8 } }} onClick={() => navigate('/promotions')}>
               <CardContent>
                 <Typography variant="h5">Акции и скидки</Typography>
                 <Typography>Актуальные предложения и специальные условия для клиентов.</Typography>
@@ -137,6 +152,6 @@ function MainPage() {
       </Container>
     </>
   );
-}
+});
 
 export default MainPage;

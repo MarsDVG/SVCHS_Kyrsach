@@ -46,7 +46,7 @@ function UserManagementPage() {
   const [search, setSearch] = React.useState("")
   const [banAction, setBanAction] = React.useState("")
   const [ordersDialogOpen, setOrdersDialogOpen] = React.useState(false)
-const [ordersDialogUser, setOrdersDialogUser] = React.useState(null)
+  const [ordersDialogUser, setOrdersDialogUser] = React.useState(null)
 
   React.useEffect(() => {
     loadUsers()
@@ -93,39 +93,39 @@ const [ordersDialogUser, setOrdersDialogUser] = React.useState(null)
   async function handleReport() {
     setLoading(true);
     try {
-        const data = await fetchUsers();
-        const bannedUsers = data.filter(user => user.block);
+      const data = await fetchUsers();
+      const bannedUsers = data.filter(user => user.block);
 
-        if (bannedUsers.length === 0) {
-            setSnackbar({ open: true, message: "Нет заблокированных пользователей", severity: "info" });
-            return;
-        }
+      if (bannedUsers.length === 0) {
+        setSnackbar({ open: true, message: "Нет заблокированных пользователей", severity: "info" });
+        return;
+      }
 
-        const doc = new jsPDF();
-        const header = ["id", "email", "role", "createdAt"];
-        const body = bannedUsers.map(user => [user.id, user.email, user.role, user.createdAt]);
+      const doc = new jsPDF();
+      const header = ["id", "email", "role", "createdAt"];
+      const body = bannedUsers.map(user => [user.id, user.email, user.role, user.createdAt]);
 
 
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        autoTable(doc, { 
-            head: [header],
-            body: body,
-            startY: 20
-        });
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      autoTable(doc, {
+        head: [header],
+        body: body,
+        startY: 20
+      });
 
-        
-        const blob = doc.output('blob');
-        saveAs(blob, `banned_users_${new Date().toISOString().slice(0, 10)}.pdf`);
 
-        setSnackbar({ open: true, message: "PDF отчёт создан", severity: "success" });
+      const blob = doc.output('blob');
+      saveAs(blob, `banned_users_${new Date().toISOString().slice(0, 10)}.pdf`);
+
+      setSnackbar({ open: true, message: "PDF отчёт создан", severity: "success" });
     } catch (error) {
-        console.error("Ошибка при генерации PDF:", error);
-        setSnackbar({ open: true, message: "Ошибка создания отчёта: " + error.message, severity: "error" });
+      console.error("Ошибка при генерации PDF:", error);
+      setSnackbar({ open: true, message: "Ошибка создания отчёта: " + error.message, severity: "error" });
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-}
+  }
   const filteredUsers = users.filter(
     u =>
       String(u.email).toLowerCase().includes(search.toLowerCase()) ||
@@ -193,10 +193,10 @@ const [ordersDialogUser, setOrdersDialogUser] = React.useState(null)
                   )}
                 </TableCell>
                 <TableCell>
-  <Button size="small" onClick={() => handleOpenOrdersDialog(user)}>
-    Заказы
-  </Button>
-</TableCell>
+                  <Button size="small" onClick={() => handleOpenOrdersDialog(user)}>
+                    Заказы
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -231,11 +231,11 @@ const [ordersDialogUser, setOrdersDialogUser] = React.useState(null)
         </Alert>
       </Snackbar>
       <UserOrdersDialog
-  open={ordersDialogOpen}
-  onClose={handleCloseOrdersDialog}
-  userId={ordersDialogUser?.id}
-  userName={ordersDialogUser?.name || ordersDialogUser?.email}
-/>
+        open={ordersDialogOpen}
+        onClose={handleCloseOrdersDialog}
+        userId={ordersDialogUser?.id}
+        userName={ordersDialogUser?.name || ordersDialogUser?.email}
+      />
     </Box>
   )
 }
