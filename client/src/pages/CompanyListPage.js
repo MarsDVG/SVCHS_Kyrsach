@@ -16,7 +16,7 @@ import {
 import { fetchCompanies } from "../api/companyApi"
 import { fetchCars } from "../api/carApi"
 import { fetchAllCompanyInfo } from "../api/company_infoApi"
-import { addFavoriteCompany } from "../api/favoritesApi"
+import { addFavoriteCompany, fetchUserFavorites, removeFavoriteCompany } from "../api/favoritesApi" 
 import { useNavigate } from "react-router-dom"
 import { observer } from "mobx-react-lite"
 import InfoIcon from "@mui/icons-material/Info"
@@ -29,12 +29,14 @@ const CompanyListPage = observer(({ authStore }) => {
   const [cars, setCars] = React.useState([])
   const [loading, setLoading] = React.useState(false)
   const [companyInfos, setCompanyInfos] = React.useState([])
+  const [favoriteCompanies, setFavoriteCompanies] = React.useState([]) 
   const navigate = useNavigate()
 
   React.useEffect(() => {
     loadCompanies()
     loadCars()
     fetchAllCompanyInfo().then(setCompanyInfos)
+    loadFavoriteCompanies() 
   }, [])
 
   async function loadCompanies() {
@@ -60,7 +62,57 @@ const CompanyListPage = observer(({ authStore }) => {
       setCompanyInfos(Array.isArray(data) ? data : [])
     } catch {}
   }
+
   
+  async function loadFavoriteCompanies() {
+    const userData = authStore.getUserData()
+    const userId = userData && (userData.id || userData.userId || userData.email || userData._id)
+    if (userId) {
+      try {
+        const data = await fetchUserFavorites() 
+        const filteredFavorites = data.filter(item => item.userId === userId);
+        setFavoriteCompanies(Array.isArray(filteredFavorites) ? filteredFavorites : [])
+      } catch (error) {
+        console.error("Ошибка при загрузке избранных компаний:", error)
+      }
+    }
+  }
+
+ 
+  async function handleAddToFavorites(companyId) {
+    const userData = authStore.getUserData()
+    const userId = userData && (userData.id || userData.userId || userData.email || userData._id)
+    if (userId) {
+      try {
+        await addFavoriteCompany(userId, companyId) 
+      
+        await loadFavoriteCompanies()
+      } catch (error) {
+        console.error("Ошибка при добавлении в избранное:", error)
+      }
+    }
+  }
+
+    // Функция для удаления компании из избранного
+    async function handleRemoveFromFavorites(companyId) {
+      const userData = authStore.getUserData();
+      const userId = userData && (userData.id || userData.userId || userData.email || userData._id);
+      if (userId) {
+        try {
+          await removeFavoriteCompany(userId, companyId); 
+          
+          await loadFavoriteCompanies();
+        } catch (error) {
+          console.error("Ошибка при удалении из избранного:", error);
+        }
+      }
+    }
+
+  // Функция для проверки, находится ли компания в избранном
+  const isCompanyFavorite = companyId => {
+    return favoriteCompanies.some(favCompany => favCompany.companyId === companyId)
+  }
+
   return (
     <Box p={isMobile ? 1 : 3}>
       <Typography variant={isMobile ? "h6" : "h4"} mb={3}>
@@ -75,6 +127,7 @@ const CompanyListPage = observer(({ authStore }) => {
           {companies.map(company => {
             const companyCars = cars.filter(car => car.companyId === company.id)
             const companyInfo = companyInfos.find(info => info.companyId === company.id)
+            const isFavorite = isCompanyFavorite(company.id) 
             return (
               <Grid key={company.id} item xs={12} sm={6} md={4}>
                 <Card sx={{ display: "flex", flexDirection: "column", alignItems: "center", p: 2 }}>
@@ -94,7 +147,7 @@ const CompanyListPage = observer(({ authStore }) => {
                     <Typography variant="subtitle2">Доступные машины:</Typography>
                     {companyCars.length === 0 ? (
                       <Typography variant="body2" color="text.secondary">Нет машин</Typography>
-                    ) : 
+                    ) : (
                       companyCars.map(car => (
                         <Box key={car.id}>
                           <Typography variant="body2" key={car.id}>
@@ -110,19 +163,31 @@ const CompanyListPage = observer(({ authStore }) => {
                           </List>
                         </Box>
                       ))
-                    }
+                    )}
                   </Box>
-                  <CardActions sx={{ width: "100%", justifyContent: "center", flexDirection: 'column'}}>
+                  <CardActions sx={{ width: "100%", justifyContent: "center", flexDirection: "column" }}>
                     <Button variant="contained" fullWidth onClick={() => navigate(`/order/create/${company.id}`)}>
                       Заказать грузоперевозку
                     </Button>
-                    <Button variant="outlined" fullWidth sx={{ mt: 1 }} onClick={() => {
-                      const userData = authStore.getUserData();
-                      const userId = userData && (userData.id || userData.userId || userData.email || userData._id);
-                      addFavoriteCompany(userId, company.id)
-                    }}>
-                      Добавить в избранное
-                    </Button>
+                    {isFavorite ? (
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        sx={{ mt: 1 }}
+                        onClick={() => handleRemoveFromFavorites(company.id)}
+                      >
+                        Удалить из избранного
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        sx={{ mt: 1 }}
+                        onClick={() => handleAddToFavorites(company.id)}
+                      >
+                        Добавить в избранное
+                      </Button>
+                    )}
                   </CardActions>
                 </Card>
               </Grid>
