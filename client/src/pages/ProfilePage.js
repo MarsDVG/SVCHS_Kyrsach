@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { Box, Typography, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Snackbar, Button } from '@mui/material';
 import authStore from '../stores/AuthStore';
 import { fetchUserOrders } from '../api/listApi';
+import api from '../api/index'; 
 
 const ProfilePage = observer(() => {
   const [orders, setOrders] = useState([]);
@@ -10,6 +11,18 @@ const ProfilePage = observer(() => {
   const [error, setError] = useState('');
   const userData = authStore.getUserData();
   const userId = userData && (userData.id || userData.userId || userData.email || userData._id);
+  const [companyNames, setCompanyNames] = useState({});
+
+
+  const getCompanyName = async (companyId) => {
+    try {
+      const company = await api.get(`/company_info/${companyId}`); 
+      return company.name; 
+    } catch (error) {
+      console.error(`Ошибка при получении информации о компании ${companyId}:`, error);
+      return 'Неизвестно'; 
+    }
+  };
 
   useEffect(() => {
     if (!userId) {
@@ -17,10 +30,20 @@ const ProfilePage = observer(() => {
       setLoading(false);
       return;
     }
+
     fetchUserOrders(userId)
-      .then((data) => {
+      .then(async (data) => {
         setOrders(Array.isArray(data) ? data : []);
         setLoading(false);
+
+      
+        const names = {};
+        for (const order of data) {
+          if (order.companyId && !names[order.companyId]) {
+            names[order.companyId] = await getCompanyName(order.companyId);
+          }
+        }
+        setCompanyNames(names);
       })
       .catch(() => {
         setError('Ошибка загрузки заказов');
@@ -58,12 +81,14 @@ const ProfilePage = observer(() => {
               <TableHead>
                 <TableRow>
                   <TableCell>Номер заказа</TableCell>
+                  <TableCell>Название компании</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {orders.map((order, idx) => (
                   <TableRow key={order.id || idx}>
                     <TableCell>{order.id || idx}</TableCell>
+                    <TableCell>{companyNames[order.companyId] || 'Не указано'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
