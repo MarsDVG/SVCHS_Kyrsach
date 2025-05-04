@@ -23,7 +23,8 @@ import {
   MenuItem,
   Select,
   InputLabel,
-  FormControl
+  FormControl,
+  FormHelperText
 } from "@mui/material"
 import AddIcon from "@mui/icons-material/Add"
 import EditIcon from "@mui/icons-material/Edit"
@@ -43,9 +44,13 @@ function CarManagementPage() {
   const [cars, setCars] = React.useState([])
   const [loading, setLoading] = React.useState(false)
   const [dialogOpen, setDialogOpen] = React.useState(false)
-  const [editData, setEditData] = React.useState(null)
+  const [editData, setEditData] = React.useState({ load_capacity: "", rent_price: "", companyId: "" })
   const [snackbar, setSnackbar] = React.useState({ open: false, message: "", severity: "success" })
   const [search, setSearch] = React.useState("")
+
+  const [loadCapacityError, setLoadCapacityError] = React.useState("");
+  const [rentPriceError, setRentPriceError] = React.useState("");
+  const [companyIdError, setCompanyIdError] = React.useState("");
 
   React.useEffect(() => {
     loadCars()
@@ -63,8 +68,8 @@ function CarManagementPage() {
   }
 
   function handleAdd() {
-    setEditData({ load_capacity: "", rent_price: "", companyId: "" })
-    setDialogOpen(true)
+    setEditData({ load_capacity: "", rent_price: "", companyId: "" });
+    setDialogOpen(true);
   }
 
   function handleEdit(car) {
@@ -79,6 +84,38 @@ function CarManagementPage() {
   }
 
   async function handleDialogSubmit() {
+
+    setLoadCapacityError("");
+    setRentPriceError("");
+    setCompanyIdError("");
+
+    let hasErrors = false;
+
+    if (!editData.load_capacity) {
+      setLoadCapacityError("Пожалуйста, введите грузоподъемность.");
+      hasErrors = true;
+    } else if (isNaN(Number(editData.load_capacity))) {
+      setLoadCapacityError("Грузоподъемность должна быть числом.");
+      hasErrors = true;
+    }
+
+    if (!editData.rent_price) {
+      setRentPriceError("Пожалуйста, введите цену аренды.");
+      hasErrors = true;
+    } else if (isNaN(Number(editData.rent_price))) {
+      setRentPriceError("Цена аренды должна быть числом.");
+      hasErrors = true;
+    }
+
+    if (!editData.companyId) {
+      setCompanyIdError("Пожалуйста, выберите компанию.");
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      return;
+    }
+
     if (editData && editData.id) {
       await updateCar(editData.id, {
         load_capacity: Number(editData.load_capacity),
@@ -177,6 +214,8 @@ function CarManagementPage() {
             onChange={handleDialogChange}
             fullWidth
             required
+            error={!!loadCapacityError}
+            helperText={loadCapacityError}
           />
           <TextField
             margin="dense"
@@ -187,8 +226,10 @@ function CarManagementPage() {
             onChange={handleDialogChange}
             fullWidth
             required
+            error={!!rentPriceError}
+            helperText={rentPriceError}
           />
-          <FormControl margin="dense" fullWidth required>
+          <FormControl margin="dense" fullWidth required error={!!companyIdError}>
             <InputLabel id="company-select-label">Company</InputLabel>
             <Select
               labelId="company-select-label"
@@ -201,6 +242,7 @@ function CarManagementPage() {
                 <MenuItem key={company.id} value={company.id}>{company.id}</MenuItem>
               ))}
             </Select>
+            {companyIdError && <FormHelperText>{companyIdError}</FormHelperText>}
           </FormControl>
         </DialogContent>
         <DialogActions>

@@ -39,7 +39,7 @@ const DriversManagementPage = observer(() => {
   const [drivers, setDrivers] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editData, setEditData] = React.useState(null);
+  const [editData, setEditData] = React.useState({ name: "", surname: "", number: "", companyId: "" });
   const [snackbar, setSnackbar] = React.useState({ open: false, message: "", severity: "success" });
 
   React.useEffect(() => {
@@ -103,7 +103,16 @@ const DriversManagementPage = observer(() => {
 
   const handleDialogChange = (e) => {
     const { name, value } = e.target;
-    setEditData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "number") {
+      
+      const validChars = /^[0-9+]*$/;  //Валидация ввода номера, можно ввести только цифры и знак +
+      if (validChars.test(value)) {
+        setEditData((prev) => ({ ...prev, [name]: value }));
+      }
+    } else {
+      setEditData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   return (
@@ -176,6 +185,7 @@ const DriversManagementPage = observer(() => {
             value={editData?.number || ""}
             onChange={handleDialogChange}
             fullWidth
+            inputProps={{ maxLength: 15 }} 
           />
           <FormControl fullWidth margin="dense">
             <InputLabel>Company</InputLabel>
