@@ -12,7 +12,6 @@ import CompanyInfoDialog from '../components/CompanyInfoDialog'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
-
 const CompanyRatingsPage = observer(() => {
   const theme = useTheme()
   const [ratings, setRatings] = useState({})
@@ -22,32 +21,57 @@ const CompanyRatingsPage = observer(() => {
   const [infoDialogOpen, setInfoDialogOpen] = useState(false)
   const [infoCompanyId, setInfoCompanyId] = useState(null)
   const [csvLoading, setCsvLoading] = useState(false)
-  const [companyNames, setCompanyNames] = useState({});
+  const [companyNames, setCompanyNames] = useState({})
+  const [userRatings, setUserRatings] = useState({}) 
 
   useEffect(() => {
     companyStore.loadCompanies()
   }, [])
+
   const handleOpenSnackbar = (message) => {
     setSnackbar({ open: true, message })
   }
+
   const handleCloseSnackbar = () => {
     setSnackbar({ open: false, message: '' })
   }
+
   const handleRatingChange = (companyId, value) => {
     setForm((prev) => ({ ...prev, [companyId]: { ...prev[companyId], rate: value } }))
+  }
+
+  const handleReviewChange = (companyId, event) => {
+    setForm((prev) => ({ ...prev, [companyId]: { ...prev[companyId], review: event.target.value } }))
   }
 
   const handleSubmit = async (companyId) => {
     try {
       const userData = authStore.getUserData()
-      await createCompanyRating({ companyId, rate: form[companyId]?.rate, comment: form[companyId]?.comment, userId: userData?.id })
+      if (!userData?.id) {
+        handleOpenSnackbar('Необходимо войти в систему, чтобы оставить отзыв')
+        return
+      }
+
+      if (userRatings[companyId]) {
+        handleOpenSnackbar('Вы уже оставили отзыв для этой компании')
+        return
+      }
+
+      await createCompanyRating({
+        companyId,
+        rate: form[companyId]?.rate,
+        review: form[companyId]?.review, 
+        userId: userData?.id,
+      })
       handleOpenSnackbar('Отзыв успешно добавлен')
       loadRatings(companyId)
+      loadUserRating(companyId, userData.id) 
       setForm((prev) => ({ ...prev, [companyId]: {} }))
     } catch (e) {
       handleOpenSnackbar('Ошибка при добавлении отзыва')
     }
   }
+
   const loadRatings = async (companyId) => {
     setLoadingRatings(true)
     try {
@@ -59,16 +83,28 @@ const CompanyRatingsPage = observer(() => {
       setLoadingRatings(false)
     }
   }
+
   const loadNames = async (companyId) => {
     try {
       const data = await fetchCompanyInfoById(companyId)
-      setCompanyNames((prev) => ({...prev, [companyId]: data.name})); // Обновляем состояние
-      return data.name;
+      setCompanyNames((prev) => ({ ...prev, [companyId]: data.name })) 
+      return data.name
     } catch (e) {
-      setCompanyNames((prev) => ({...prev, [companyId]: 'Unknown'})); // Обновляем состояние
-      return 'Unknown';
+      setCompanyNames((prev) => ({ ...prev, [companyId]: 'Unknown' })) 
+      return 'Unknown'
     }
-  };
+  }
+
+  const loadUserRating = async (companyId, userId) => {
+    try {
+      const data = await fetchCompanyRatingsByCompanyId(companyId)
+      const userRating = data.find((rating) => rating.userId === userId)
+      setUserRatings((prev) => ({ ...prev, [companyId]: userRating || null }))
+    } catch (e) {
+      setUserRatings((prev) => ({ ...prev, [companyId]: null }))
+    }
+  }
+
   useEffect(() => {
     if (companyStore.companies.length > 0) {
       companyStore.companies.forEach((company) => {
@@ -76,12 +112,24 @@ const CompanyRatingsPage = observer(() => {
         loadNames(company.id)
       })
     }
-    // eslint-disable-next-line
+
   }, [companyStore.companies.length])
+
+  useEffect(() => {
+    if (companyStore.companies.length > 0 && authStore.isLoggedIn) {
+      const userData = authStore.getUserData()
+      companyStore.companies.forEach((company) => {
+        loadUserRating(company.id, userData.id)
+      })
+    }
+
+  }, [companyStore.companies.length, authStore.isLoggedIn])
+
   const handleOpenInfo = (companyId) => {
     setInfoCompanyId(companyId)
     setInfoDialogOpen(true)
   }
+
   const handleCloseInfo = () => {
     setInfoDialogOpen(false)
     setInfoCompanyId(null)
@@ -108,7 +156,7 @@ const CompanyRatingsPage = observer(() => {
 
       const tableData = ratingData.map(({ companyName, ratingCompany }) => {
         const sum = ratingCompany.reduce((acc, rating) => acc + rating.rate, 0);
-        const avg = ratingCompany.length > 0 ? sum / ratingCompany.length : 0; // Обработка случая пустого массива
+        const avg = ratingCompany.length > 0 ? sum / ratingCompany.length : 0; 
         return [companyName, avg];
       });
 
@@ -137,6 +185,7 @@ const CompanyRatingsPage = observer(() => {
       setCsvLoading(false);
     }
   };
+
   return (
     <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
@@ -152,42 +201,81 @@ const CompanyRatingsPage = observer(() => {
         <Grid container spacing={3}>
           {companyStore.companies.map((company) => (
             <Grid item xs={12} sm={6} key={company.id}>
-              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <CardContent>
-                  <Typography variant="h6" sx={{ mb: 1 }}>{companyNames[company.id]} </Typography>
-                  <Box sx={{ mb: 1 }}>
-                    <Rating
-                      value={form[company.id]?.rate || 0}
-                      onChange={(_, value) => handleRatingChange(company.id, value)}
-                      precision={1}
-                    />
-                  </Box>
-                  <Button
-                    variant="contained"
-                    onClick={() => handleSubmit(company.id)}
-                    disabled={!form[company.id]?.rate}
-                  >
-                    Оставить оценку
-                  </Button>
+                  <Typography variant="h6" sx={{ mb: 1 }}>
+                    {companyNames[company.id]}{' '}
+                  </Typography>
+                  {userRatings[company.id] ? (
+                    <Box>
+                      <Typography variant="subtitle2">Ваш отзыв:</Typography>
+                      <Rating value={userRatings[company.id].rate} readOnly size="small" />
+                      <Typography variant="body2">{userRatings[company.id].review}</Typography> 
+                    </Box>
+                  ) : (
+                    <Box>
+                      <Box sx={{ mb: 1 }}>
+                        <Rating
+                          value={form[company.id]?.rate || 0}
+                          onChange={(_, value) => handleRatingChange(company.id, value)}
+                          precision={1}
+                        />
+                      </Box>
+                      <TextField
+                        label="Отзыв" 
+                        multiline
+                        rows={2}
+                        fullWidth
+                        value={form[company.id]?.review || ''} 
+                        onChange={(event) => handleReviewChange(company.id, event)} 
+                        sx={{ mb: 2 }}
+                      />
+                      <Button
+                        variant="contained"
+                        onClick={() => handleSubmit(company.id)}
+                        disabled={!form[company.id]?.rate}
+                      >
+                        Оставить оценку
+                      </Button>
+                    </Box>
+                  )}
                   <CardActions>
-                    <Button size="small" onClick={() => handleOpenInfo(company.id)} startIcon={<InfoIcon />}>
+                    <Button
+                      size="small"
+                      onClick={() => handleOpenInfo(company.id)}
+                      startIcon={<InfoIcon />}
+                    >
                       Инфо
                     </Button>
                   </CardActions>
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Оценки:</Typography>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      Оценки:
+                    </Typography>
                     {loadingRatings ? (
                       <CircularProgress size={24} />
                     ) : (
                       ratings[company.id]?.length > 0 ? (
                         ratings[company.id].map((r, idx) => (
-                          <Box key={idx} sx={{ mb: 1, p: 1, borderRadius: 1, bgcolor: theme.palette.grey[100] }}>
+                          <Box
+                            key={idx}
+                            sx={{ mb: 1, p: 1, borderRadius: 1, bgcolor: theme.palette.grey[100] }}
+                          >
                             <Rating value={r.rate} readOnly size="small" />
-                            <Typography variant="body2">{r.comment}</Typography>
+                            <Typography variant="body2">{r.review}</Typography> 
                           </Box>
                         ))
                       ) : (
-                        <Typography variant="body2" color="text.secondary">Нет отзывов</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Нет отзывов
+                        </Typography>
                       )
                     )}
                   </Box>

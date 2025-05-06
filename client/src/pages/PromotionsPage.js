@@ -1,71 +1,120 @@
-import React from 'react';
-import { Box, Grid, Card, CardContent, Typography, Chip, Stack, useTheme } from '@mui/material';
-
-const mockPromotions = [
-  {
-    title: 'Весенняя распродажа',
-    description: 'Скидка 20% на все услуги перевозки до конца апреля!',
-    type: 'Скидка',
-    validUntil: '30.04.2025',
-    color: 'success',
-  },
-  {
-    title: 'Подарок новым клиентам',
-    description: 'Бесплатные услуги грузчиков для первого заказа.',
-    type: 'Подарок',
-    validUntil: '31.05.2025',
-    color: 'info',
-  },
-  {
-    title: 'Счастливые выходные',
-    description: '10% скидка на перевозки в выходные дни.',
-    type: 'Скидка',
-    validUntil: '01.06.2025',
-    color: 'warning',
-  },
-  {
-    title: 'Промокод "ЛЕТО2025"',
-    description: 'Используйте промокод и получите скидку 15% на следующую перевозку.',
-    type: 'Промокод',
-    validUntil: '15.06.2025',
-    color: 'primary',
-  },
-];
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  Stack,
+  useTheme,
+  List,
+  ListItem,
+  ListItemText,
+} from '@mui/material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+import { fetchPromotions } from '../api/promotionApi'; 
 
 function PromotionsPage() {
   const theme = useTheme();
+  const [promotions, setPromotions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const getPromotions = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetchPromotions();
+        if (response && Array.isArray(response)) {
+          const activePromotions = response.filter(promotion => promotion.isActive);
+          setPromotions(activePromotions);
+        } else {
+          setError('Неверный формат данных, полученных от API.');
+        }
+      } catch (err) {
+        setError(err.message || 'Ошибка при загрузке акций.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getPromotions();
+  }, []);
+
+  const getColorByType = (type) => {
+    switch (type) {
+      case 'Скидка':
+        return 'success';
+      case 'Промокод':
+        return 'primary';
+      default:
+        return 'warning';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{
+        py: { xs: 4, md: 6 },
+        px: { xs: 2, md: 6 },
+        minHeight: '60vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <Typography variant="h6">Загрузка акций...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{
+        py: { xs: 4, md: 6 },
+        px: { xs: 2, md: 6 },
+        minHeight: '60vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: theme.palette.error.main,
+      }}>
+        <Typography variant="h6">Ошибка: {error}</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{
-      py: { xs: 4, md: 6 },
-      px: { xs: 2, md: 6 },
-      minHeight: '60vh',
-      background: 'linear-gradient(120deg, #f0fdfa 0%, #e0e7ff 100%)',
-    }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 4, color: theme.palette.primary.dark, textAlign: 'center' }}>
-        Акции и скидки
+    <Box sx={{ padding: 2 }}>
+      <Typography variant="h4" gutterBottom>
+        Список Акций
       </Typography>
-      <Grid container spacing={3} justifyContent="center">
-        {mockPromotions.map((promo, idx) => (
-          <Grid item xs={12} sm={6} md={4} key={idx}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, boxShadow: 3 }}>
-              <CardContent>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    {promo.title}
-                  </Typography>
-                  <Chip label={promo.type} color={promo.color} size="small" />
-                </Stack>
-                <Typography variant="body1" sx={{ mb: 2, color: theme.palette.text.secondary }}>
-                  {promo.description}
-                </Typography>
-                <Typography variant="caption" sx={{ color: theme.palette.grey[600] }}>
-                  Действует до: {promo.validUntil}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+      <List>
+        {promotions.map((promotion) => (
+          <ListItem key={promotion.id}>
+            <ListItemText
+              primary={promotion.title}
+              secondary={
+                <>
+                  {promotion.description} - Действует до: {dayjs(promotion.validUntil).format('DD.MM.YYYY')}
+                  <br />
+                  Тип: {promotion.type}
+                  {promotion.type === 'Скидка' && (
+                    <>
+                      <br />
+                      Скидка: {promotion.discountPercentage}%
+                    </>
+                  )}
+                </>
+              }
+            />
+          </ListItem>
         ))}
-      </Grid>
+      </List>
     </Box>
   );
 }

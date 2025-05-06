@@ -18,8 +18,8 @@ function AdminIndexPage() {
         Админ-панель
       </Typography>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Card sx={{width: "100%"}}>
+        <Grid item xs={12} sm={6}>
+          <Card sx={{ width: "100%" }}>
             <CardActionArea onClick={() => navigate('/company-management')}>
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -32,8 +32,8 @@ function AdminIndexPage() {
             </CardActionArea>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Card sx={{width: "100%"}}>
+        <Grid item xs={12} sm={6}>
+          <Card sx={{ width: "100%" }}>
             <CardActionArea onClick={() => navigate('/car-management')}>
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -46,8 +46,8 @@ function AdminIndexPage() {
             </CardActionArea>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Card sx={{width: "100%"}}>
+        <Grid item xs={12} sm={6}>
+          <Card sx={{ width: "100%" }}>
             <CardActionArea onClick={() => navigate('/user-management')}>
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -60,8 +60,8 @@ function AdminIndexPage() {
             </CardActionArea>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Card sx={{width: "100%"}}>
+        <Grid item xs={12} sm={6}>
+          <Card sx={{ width: "100%" }}>
             <CardActionArea onClick={() => navigate('/drivers-management')}>
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -74,8 +74,8 @@ function AdminIndexPage() {
             </CardActionArea>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Card sx={{width: "100%"}}>
+        <Grid item xs={12} sm={6}>
+          <Card sx={{ width: "100%" }}>
             <CardActionArea onClick={() => navigate('/company-ratings')}>
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -83,6 +83,20 @@ function AdminIndexPage() {
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   Просмотр рейтингов и создание отчёта
+                </Typography>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Card sx={{ width: "100%" }}>
+            <CardActionArea onClick={() => navigate('/promotion-management')}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Управление акциями
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Просмотр, добавление и редактирование акций и скидок
                 </Typography>
               </CardContent>
             </CardActionArea>

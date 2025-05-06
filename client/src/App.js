@@ -18,6 +18,7 @@ import PromotionsPage from './pages/PromotionsPage';
 import CompanyRatingsPage from './pages/CompanyRatingsPage';
 import UserOrdersPage from './pages/UserOrdersPage';
 import DriversManagementPage from './pages/DriversManagementPage';
+import PromotionManagementPage from './pages/PromotionManagementPage';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route path="/promotions" element={<PromotionsPage />} />
           <Route path="/company-ratings" element={<CompanyRatingsPage />} />
           <Route path="/user-orders" element={<UserOrdersPage authStore={authStore} />} />
+          <Route path="/promotion-management" element={<PromotionManagementPage />} />
           <Route path="/drivers-management" element={<DriversManagementPage />} />
           <Route path="/" element={<MainPage />} />
         </Routes>

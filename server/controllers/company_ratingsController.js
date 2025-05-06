@@ -4,18 +4,17 @@ const ApiError = require('../error/ApiError')
 class RaitingController {
     async create(req, res, next) {
         try {
-            const { rate, userId, companyId } = req.body;
+            const { rate, userId, companyId, review } = req.body; 
             if (!rate || !userId || !companyId) {
                 return next(ApiError.badRequest('All fields (rate, userId, companyId) are required.'));
             }
     
-            // Проверка на существование оценки
             const existingRating = await Company_rating.findOne({ where: { userId, companyId } });
             if (existingRating) {
                 return next(ApiError.badRequest('Вы уже поставили оценку этой компании.'));
             }
     
-            const rating = await Company_rating.create({ rate, userId, companyId });
+            const rating = await Company_rating.create({ rate, userId, companyId, review }); 
             return res.json(rating);
         } catch (e) {
             next(ApiError.internal(e.message));

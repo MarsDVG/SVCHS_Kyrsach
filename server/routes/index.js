@@ -8,6 +8,7 @@ const company_infoRouter = require('./company_infoRouter')
 const driversRouter = require('./driversRouter')
 const company_ratingsRouter = require('./company_ratingsRouter')
 const companyRouter = require('./companyRouter')
+const promotionRouter = require('./promotionRouter')
 
 router.use('/user', userRouter)
 router.use('/list', listRouter)
@@ -17,5 +18,6 @@ router.use('/company_info', company_infoRouter)
 router.use('/driver', driversRouter)
 router.use('/company_ratings', company_ratingsRouter)
 router.use('/company', companyRouter)
+router.use('/promotion', promotionRouter)
 
 module.exports = router

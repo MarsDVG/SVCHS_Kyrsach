@@ -33,6 +33,7 @@ const Company_info = sequelize.define('company_info', {
 const Company_rating = sequelize.define('company_rating', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, },
     rate: {type: DataTypes.DOUBLE, allowNull: false, },
+    review: {type: DataTypes.STRING, allowNull: false, },
 })
 
 const Favorites = sequelize.define('favorites', {
@@ -51,6 +52,15 @@ const Driver = sequelize.define('driver', {
     surname: {type: DataTypes.STRING, allowNull: false, },
     number: {type: DataTypes.STRING, allowNull: false, },
 })
+const Promotion = sequelize.define('promotion', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    title: { type: DataTypes.STRING, allowNull: false },
+    description: { type: DataTypes.TEXT, allowNull: false },
+    type: { type: DataTypes.STRING, defaultValue: "Скидка" }, 
+    validUntil: { type: DataTypes.DATE, allowNull: false },
+    discountPercentage: { type: DataTypes.INTEGER, defaultValue: 0 }, 
+    isActive: { type: DataTypes.BOOLEAN, defaultValue: true } 
+  });
 
 User.hasOne(List)
 List.belongsTo(User)
@@ -94,5 +104,6 @@ module.exports = {
     Company_rating,
     Favorites,
     Car,
-    Driver
+    Driver,
+    Promotion
 }
